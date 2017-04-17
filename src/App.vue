@@ -18,12 +18,25 @@
                        :options="refs.streetType">
         </b-form-select>
       </b-form-fieldset>
-      <b-form-fieldset label="Содержит числительные"
-                       horizontal>
-        <b-form-checkbox v-model="filter.withNumbers"
-                      type="number">
-        </b-form-checkbox>
-      </b-form-fieldset>
+      <div class="row">
+        <div class="col-3"></div>
+        <div class="col-4">
+          <b-form-fieldset label="Содержит числительные"
+                           :label-size=6
+                           horizontal>
+            <b-form-checkbox v-model="filter.withNumbers">
+            </b-form-checkbox>
+          </b-form-fieldset>
+        </div>
+        <div class="col-4">
+          <b-form-fieldset label="Содержит персону"
+                           :label-size=6
+                           horizontal>
+            <b-form-checkbox v-model="filter.withPerson">
+            </b-form-checkbox>
+          </b-form-fieldset>
+        </div>
+      </div>
 
       <b-form-fieldset label="Шаблон названия"
                        horizontal>
@@ -67,6 +80,7 @@
 <script>
 import okatoRef from './data/okato.json';
 import streetRef from './data/moscow-streets.json';
+import peopleRef from './data/people.json';
 
 function okatoItemConverter(item) {
   return {
@@ -85,12 +99,15 @@ const streetTypeRef = [anyItem].concat(Object.getOwnPropertyNames(streetRef.redu
   return res;
 }, {})));
 
+const peopleNameRoots = peopleRef.map(item => item.text.replace(/(а|ий|ая|ого|ь)$/i, ''));
+
 const data = {
   filter: {
     okato: '',
     okato2: '',
     streetType: '',
     withNumbers: false,
+    withPerson: false,
   },
   refs: {
     okato: [anyItem].concat(okatoRef
@@ -144,6 +161,9 @@ export default {
       const re = new RegExp(`^${okato}`);
 
       function filterFn(item) {
+        if (item.active !== '1') {
+          return false;
+        }
         if (okato && !re.test(item.okato)) {
           return false;
         }
@@ -152,6 +172,11 @@ export default {
         }
         if (app.filter.withNumbers && !/\d/.test(item.name)) {
           return false;
+        }
+        if (app.filter.withPerson) {
+          if (!peopleNameRoots.some(person => item.name.indexOf(person) > -1)) {
+            return false;
+          }
         }
         if (app.filter.streetNameTemplate) {
           const reName = new RegExp(app.filter.streetNameTemplate.replace('*', '.*'), 'i');
